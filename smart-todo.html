@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Todo — Lojain Hany</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F7F4;
+    --ink:#15171B;
+    --ink-soft:#565A63;
+    --line:#DEDFDA;
+    --accent:#00A99A;
+    --accent-soft:#E4F5F2;
+    --card:#FFFFFF;
+    --danger:#D85A30;
+    --danger-soft:#FAECE7;
+    --warn:#BA7517;
+    --warn-soft:#FAEEDA;
+    --mono:'JetBrains Mono', monospace;
+    --display:'Space Grotesk', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:var(--body);line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:48px 20px 80px;
+  }
+  .app{max-width:680px;margin:0 auto;}
+
+  .app-head{margin-bottom:32px;}
+  .eyebrow{font-family:var(--mono);font-size:12px;color:var(--accent);display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1{font-family:var(--display);font-weight:600;font-size:32px;letter-spacing:-0.01em;}
+  .app-sub{color:var(--ink-soft);font-size:15px;margin-top:8px;max-width:48ch;}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:28px 0;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:14px 16px;}
+  .stat b{font-family:var(--display);font-size:22px;display:block;}
+  .stat span{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+
+  /* form */
+  .add-form{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:18px;margin-bottom:28px;}
+  .row1{display:flex;gap:10px;margin-bottom:10px;}
+  input[type=text]{
+    flex:1;font-family:var(--body);font-size:15px;
+    border:1px solid var(--line);border-radius:2px;padding:11px 12px;
+    background:var(--paper);color:var(--ink);
+  }
+  input[type=text]:focus, select:focus, input[type=date]:focus{outline:none;border-color:var(--accent);}
+  .row2{display:flex;gap:10px;flex-wrap:wrap;}
+  select, input[type=date]{
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:2px;padding:9px 10px;
+    background:var(--paper);
+  }
+  .add-btn{
+    font-family:var(--mono);font-size:13px;padding:11px 20px;
+    background:var(--ink);color:var(--paper);border:none;border-radius:2px;
+    cursor:pointer;transition:background .15s ease;
+  }
+  .add-btn:hover{background:var(--accent);}
+  .field-error{font-family:var(--mono);font-size:12px;color:var(--danger);margin-top:6px;display:none;}
+
+  /* filters */
+  .filters{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .filter-btn{
+    font-family:var(--mono);font-size:12px;padding:8px 14px;
+    border:1px solid var(--line);border-radius:2px;background:var(--card);
+    color:var(--ink-soft);cursor:pointer;transition:all .15s ease;
+  }
+  .filter-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+  .filter-btn:hover:not(.active){border-color:var(--accent);color:var(--ink);}
+
+  /* task list */
+  .task-list{display:flex;flex-direction:column;gap:10px;}
+  .task{
+    background:var(--card);border:1px solid var(--line);border-radius:3px;
+    padding:16px 16px;display:flex;align-items:flex-start;gap:14px;
+    transition:border-color .15s ease;
+  }
+  .task.done{opacity:0.5;}
+  .task.overdue{border-color:var(--danger);}
+  .check{
+    width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);
+    flex-shrink:0;cursor:pointer;margin-top:2px;display:flex;align-items:center;justify-content:center;
+    transition:all .15s ease;
+  }
+  .check:hover{border-color:var(--accent);}
+  .check.checked{background:var(--accent);border-color:var(--accent);color:#fff;font-size:12px;}
+  .task-body{flex:1;min-width:0;}
+  .task-title{font-family:var(--display);font-size:16px;font-weight:600;}
+  .task.done .task-title{text-decoration:line-through;}
+  .task-meta{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+  .tag{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:2px;}
+  .tag.priority-high{background:var(--danger-soft);color:#4A1B0C;}
+  .tag.priority-medium{background:var(--warn-soft);color:#412402;}
+  .tag.priority-low{background:var(--accent-soft);color:#04342C;}
+  .tag.due{background:#F1EFE8;color:var(--ink-soft);}
+  .tag.due.overdue-tag{background:var(--danger-soft);color:#4A1B0C;}
+  .tag.category{background:#EEEDFE;color:#26215C;}
+  .del-btn{
+    background:none;border:none;color:var(--ink-soft);cursor:pointer;
+    font-family:var(--mono);font-size:16px;padding:4px 6px;flex-shrink:0;
+    transition:color .15s ease;
+  }
+  .del-btn:hover{color:var(--danger);}
+
+  .empty{
+    text-align:center;padding:48px 20px;color:var(--ink-soft);
+    font-family:var(--mono);font-size:13px;border:1px dashed var(--line);border-radius:4px;
+  }
+
+  .footer-note{
+    margin-top:28px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+    text-align:center;
+  }
+
+  @media (max-width:480px){
+    .stats{grid-template-columns:repeat(3,1fr);}
+    .stat b{font-size:18px;}
+    h1{font-size:26px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-head">
+    <div class="eyebrow">SMART TODO · PRIORITY ENGINE</div>
+    <h1>Today's Focus</h1>
+    <p class="app-sub">Tasks auto-sort by urgency — overdue and high-priority items rise to the top automatically.</p>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="stat-total">0</b><span>Total</span></div>
+    <div class="stat"><b id="stat-active">0</b><span>Active</span></div>
+    <div class="stat"><b id="stat-done">0</b><span>Done</span></div>
+  </div>
+
+  <div class="add-form">
+    <div class="row1">
+      <input type="text" id="task-input" placeholder="What needs to get done?" />
+      <button class="add-btn" id="add-btn">Add task</button>
+    </div>
+    <div class="row2">
+      <select id="priority-input">
+        <option value="high">High priority</option>
+        <option value="medium" selected>Medium priority</option>
+        <option value="low">Low priority</option>
+      </select>
+      <select id="category-input">
+        <option value="study">Study</option>
+        <option value="project">Project</option>
+        <option value="personal">Personal</option>
+        <option value="other">Other</option>
+      </select>
+      <input type="date" id="due-input" />
+    </div>
+    <div class="field-error" id="field-error">Enter a task title first.</div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="active">Active</button>
+    <button class="filter-btn" data-filter="done">Done</button>
+    <button class="filter-btn" data-filter="high">High priority</button>
+  </div>
+
+  <div class="task-list" id="task-list"></div>
+  <div class="footer-note">Smart Todo — built by Lojain Hany</div>
+</div>
+
+<script>
+let tasks = [
+  {id:1, title:"Finish Huawei cert module 8", priority:"high", category:"study", due: new Date(Date.now()-86400000).toISOString().slice(0,10), done:false},
+  {id:2, title:"Update portfolio projects section", priority:"medium", category:"project", due: new Date(Date.now()+2*86400000).toISOString().slice(0,10), done:false},
+  {id:3, title:"Review AI training notes", priority:"low", category:"study", due:"", done:true}
+];
+let filter = "all";
+let nextId = 4;
+
+const list = document.getElementById('task-list');
+const input = document.getElementById('task-input');
+const priorityInput = document.getElementById('priority-input');
+const categoryInput = document.getElementById('category-input');
+const dueInput = document.getElementById('due-input');
+const fieldError = document.getElementById('field-error');
+
+function priorityWeight(p){ return p === 'high' ? 0 : p === 'medium' ? 1 : 2; }
+
+function isOverdue(t){
+  if(!t.due || t.done) return false;
+  const today = new Date().toISOString().slice(0,10);
+  return t.due < today;
+}
+
+function smartSort(arr){
+  return [...arr].sort((a,b)=>{
+    if(a.done !== b.done) return a.done ? 1 : -1;
+    const aOver = isOverdue(a), bOver = isOverdue(b);
+    if(aOver !== bOver) return aOver ? -1 : 1;
+    if(priorityWeight(a.priority) !== priorityWeight(b.priority)) return priorityWeight(a.priority) - priorityWeight(b.priority);
+    if(a.due && b.due) return a.due < b.due ? -1 : 1;
+    if(a.due) return -1;
+    if(b.due) return 1;
+    return 0;
+  });
+}
+
+function formatDue(due){
+  if(!due) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(due + "T00:00:00");
+  const diffDays = Math.round((d - today) / 86400000);
+  if(diffDays === 0) return "Due today";
+  if(diffDays === 1) return "Due tomorrow";
+  if(diffDays < 0) return `Overdue ${Math.abs(diffDays)}d`;
+  return `Due in ${diffDays}d`;
+}
+
+function render(){
+  let visible = tasks;
+  if(filter === 'active') visible = tasks.filter(t=>!t.done);
+  else if(filter === 'done') visible = tasks.filter(t=>t.done);
+  else if(filter === 'high') visible = tasks.filter(t=>t.priority==='high' && !t.done);
+
+  visible = smartSort(visible);
+
+  list.innerHTML = '';
+  if(visible.length === 0){
+    list.innerHTML = '<div class="empty">No tasks here. Add one above to get started.</div>';
+  } else {
+    visible.forEach(t=>{
+      const overdue = isOverdue(t);
+      const div = document.createElement('div');
+      div.className = 'task' + (t.done ? ' done' : '') + (overdue ? ' overdue' : '');
+      const dueLabel = formatDue(t.due);
+      div.innerHTML = `
+        <div class="check ${t.done ? 'checked' : ''}" data-id="${t.id}">${t.done ? '<i class="ti">&#10003;</i>' : ''}</div>
+        <div class="task-body">
+          <div class="task-title"></div>
+          <div class="task-meta">
+            <span class="tag priority-${t.priority}">${t.priority}</span>
+            <span class="tag category">${t.category}</span>
+            ${dueLabel ? `<span class="tag due ${overdue ? 'overdue-tag' : ''}">${dueLabel}</span>` : ''}
+          </div>
+        </div>
+        <button class="del-btn" data-id="${t.id}" aria-label="Delete task">&times;</button>
+      `;
+      div.querySelector('.task-title').textContent = t.title;
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById('stat-total').textContent = tasks.length;
+  document.getElementById('stat-active').textContent = tasks.filter(t=>!t.done).length;
+  document.getElementById('stat-done').textContent = tasks.filter(t=>t.done).length;
+}
+
+function addTask(){
+  const title = input.value.trim();
+  if(!title){
+    fieldError.style.display = 'block';
+    input.focus();
+    return;
+  }
+  fieldError.style.display = 'none';
+  tasks.push({
+    id: nextId++,
+    title,
+    priority: priorityInput.value,
+    category: categoryInput.value,
+    due: dueInput.value,
+    done: false
+  });
+  input.value = '';
+  dueInput.value = '';
+  input.focus();
+  render();
+}
+
+document.getElementById('add-btn').addEventListener('click', addTask);
+input.addEventListener('keydown', e=>{ if(e.key === 'Enter') addTask(); });
+input.addEventListener('input', ()=>{ if(input.value.trim()) fieldError.style.display = 'none'; });
+
+list.addEventListener('click', e=>{
+  const checkEl = e.target.closest('.check');
+  const delEl = e.target.closest('.del-btn');
+  if(checkEl){
+    const id = Number(checkEl.dataset.id);
+    const t = tasks.find(t=>t.id===id);
+    if(t) t.done = !t.done;
+    render();
+  } else if(delEl){
+    const id = Number(delEl.dataset.id);
+    tasks = tasks.filter(t=>t.id!==id);
+    render();
+  }
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.filter;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
